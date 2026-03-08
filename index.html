@@ -86,12 +86,16 @@
 
     .tonebar span {
       min-width: 120px;
-      padding: 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(150, 197, 235, 0.5);
-      background: rgba(8, 29, 47, 0.36);
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px dashed rgba(186, 216, 242, 0.55);
+      background: rgba(11, 36, 58, 0.2);
       text-align: center;
-      font-weight: 700;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: default;
+      user-select: none;
+      pointer-events: none;
       letter-spacing: 0.2px;
     }
 
@@ -403,10 +407,16 @@
               <option value="bw">Black & White</option>
               <option value="duo">Duotone</option>
               <option value="tri">Tritone</option>
+              <option value="sepia">Sepia</option>
+              <option value="cool">Cool Tone</option>
+              <option value="warm">Warm Tone</option>
+              <option value="invert">Invert</option>
+              <option value="poster">Posterize</option>
+              <option value="solar">Solarize</option>
             </select>
           </div>
 
-          <div class="field">
+          <div class="field" id="colorField">
             <label>Color Palette</label>
             <div class="color-grid">
               <div class="color-item">
@@ -433,7 +443,7 @@
             </div>
           </div>
 
-          <p class="hint">Tip: In Duotone mode, highlight color is hidden automatically.</p>
+          <p class="hint" id="modeHint">Tip: In Duotone mode, highlight color is hidden automatically.</p>
           <div class="actions">
             <button id="apply" type="button">
               <svg class="btn-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>
@@ -479,6 +489,8 @@
 
     const modeEl = document.getElementById("mode");
     const modeBadge = document.getElementById("modeBadge");
+    const colorField = document.getElementById("colorField");
+    const modeHint = document.getElementById("modeHint");
     const c3Wrap = document.getElementById("c3Wrap");
     const fileEl = document.getElementById("file");
     const c1El = document.getElementById("c1");
@@ -500,16 +512,31 @@
       return a + (b - a) * t;
     }
 
+    function clamp8(v) {
+      return Math.max(0, Math.min(255, v));
+    }
+
     function modeName(mode) {
       if (mode === "duo") return "Duotone";
       if (mode === "tri") return "Tritone";
+      if (mode === "sepia") return "Sepia";
+      if (mode === "cool") return "Cool Tone";
+      if (mode === "warm") return "Warm Tone";
+      if (mode === "invert") return "Invert";
+      if (mode === "poster") return "Posterize";
+      if (mode === "solar") return "Solarize";
       return "Black & White";
     }
 
     function refreshModeUI() {
       const mode = modeEl.value;
+      const paletteMode = mode === "duo" || mode === "tri";
       const tri = mode === "tri";
+      colorField.style.display = paletteMode ? "block" : "none";
       c3Wrap.style.display = tri ? "grid" : "none";
+      modeHint.textContent = paletteMode
+        ? "Tip: In Duotone mode, highlight color is hidden automatically."
+        : "Tip: These modes use built-in color processing. Only upload image and apply.";
       modeBadge.textContent = modeName(mode);
     }
 
@@ -540,6 +567,9 @@
       const c3 = rgb(c3El.value);
 
       for (let i = 0; i < d.length; i += 4) {
+        const r = d[i];
+        const g = d[i + 1];
+        const b = d[i + 2];
         const v = (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]) / 255;
         if (mode === "bw") {
           d[i] = v * 255;
@@ -553,12 +583,52 @@
           d[i + 2] = mix(c1[2], c2[2], v);
           continue;
         }
-        const t = v < 0.5 ? v * 2 : (v - 0.5) * 2;
-        const a = v < 0.5 ? c1 : c2;
-        const b = v < 0.5 ? c2 : c3;
-        d[i] = mix(a[0], b[0], t);
-        d[i + 1] = mix(a[1], b[1], t);
-        d[i + 2] = mix(a[2], b[2], t);
+        if (mode === "tri") {
+          const t = v < 0.5 ? v * 2 : (v - 0.5) * 2;
+          const a = v < 0.5 ? c1 : c2;
+          const b2 = v < 0.5 ? c2 : c3;
+          d[i] = mix(a[0], b2[0], t);
+          d[i + 1] = mix(a[1], b2[1], t);
+          d[i + 2] = mix(a[2], b2[2], t);
+          continue;
+        }
+        if (mode === "sepia") {
+          d[i] = clamp8(0.393 * r + 0.769 * g + 0.189 * b);
+          d[i + 1] = clamp8(0.349 * r + 0.686 * g + 0.168 * b);
+          d[i + 2] = clamp8(0.272 * r + 0.534 * g + 0.131 * b);
+          continue;
+        }
+        if (mode === "cool") {
+          d[i] = clamp8(r * 0.92);
+          d[i + 1] = clamp8(g * 1.02);
+          d[i + 2] = clamp8(b * 1.14);
+          continue;
+        }
+        if (mode === "warm") {
+          d[i] = clamp8(r * 1.12);
+          d[i + 1] = clamp8(g * 1.03);
+          d[i + 2] = clamp8(b * 0.9);
+          continue;
+        }
+        if (mode === "invert") {
+          d[i] = 255 - r;
+          d[i + 1] = 255 - g;
+          d[i + 2] = 255 - b;
+          continue;
+        }
+        if (mode === "poster") {
+          const levels = 4;
+          const q = 255 / (levels - 1);
+          d[i] = Math.round(r / q) * q;
+          d[i + 1] = Math.round(g / q) * q;
+          d[i + 2] = Math.round(b / q) * q;
+          continue;
+        }
+        if (mode === "solar") {
+          d[i] = r > 127 ? 255 - r : r;
+          d[i + 1] = g > 127 ? 255 - g : g;
+          d[i + 2] = b > 127 ? 255 - b : b;
+        }
       }
       ctx.putImageData(imageData, 0, 0);
     }
