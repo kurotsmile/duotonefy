@@ -160,14 +160,53 @@ canvas, img.preview, svg {
   main, header { padding: 16px; }
 }</style>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Duotonefy","description":"Turn photos into black-and-white, duotone, and tritone creative variants.","applicationCategory":"UtilitiesApplication","operatingSystem":"Any","url":"https://duotonefy.web.app"}</script>
+<style id="round2-style">
+body.theme-shell::before, body.theme-shell::after {
+  content:"";
+  position:fixed;
+  z-index:-1;
+  width:320px;
+  height:320px;
+  border-radius:42% 58% 52% 48% / 62% 41% 59% 38%;
+  background:linear-gradient(136deg, #396afc22, #ff5f6d22);
+  filter: blur(1px);
+}
+body.theme-shell::before { top:-90px; right:-90px; }
+body.theme-shell::after { bottom:-110px; left:-110px; }
+.tool-ribbon {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  margin:0 0 12px;
+  border:1px solid color-mix(in srgb, #396afc 32%, #ffffff);
+  background:linear-gradient(120deg, #396afc14, #ff5f6d10);
+  border-radius:12px;
+  font-weight:700;
+  letter-spacing:.2px;
+}
+.ribbon-ic {
+  width:18px;
+  height:18px;
+  stroke:color-mix(in srgb, #396afc 65%, #102030);
+  fill:none;
+  stroke-width:1.9;
+}
+header h1 { position: relative; z-index: 1; }
+header .sub { position: relative; z-index: 1; }
+main { position: relative; overflow: visible; }
+button { min-height: 42px; }
+.theme-shell main{background:linear-gradient(180deg,#fff, #fbfdff)}.theme-shell .tool-ribbon{box-shadow:0 10px 20px rgba(0,0,0,.08)}
+</style>
 </head>
-<body>
+<body class="theme-shell">
   <div class="container">
     <header>
       <h1>Black & White / Duotone / Tritone Generator</h1>
       <p class="sub">Turn photos into black-and-white, duotone, and tritone creative variants.</p>
     </header>
     <main>
+      <div class="tool-ribbon"><svg viewBox="0 0 24 24" class="ribbon-ic"><circle cx="7" cy="12" r="4"/><circle cx="17" cy="12" r="4"/><path d="M11 12h2"/></svg><span>Tone Mapping Designer</span></div>
       <input id="file" type="file" accept="image/*">
     <div class="grid two" style="margin-top:10px"><select id="mode"><option value="bw">Black & White</option><option value="duo">Duotone</option><option value="tri">Tritone</option></select><button id="apply">Apply</button></div>
     <div class="grid two" style="margin-top:10px"><input id="c1" type="color" value="#111111"><input id="c2" type="color" value="#ff8a00"></div>
