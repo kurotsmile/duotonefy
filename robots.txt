@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://duotonefy.web.app/sitemap.xml
